@@ -1,0 +1,827 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Appuntamentometro.exe</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --surface: #ffffff;
+    --surface2: #fff8fb;
+    --border: #fce4ee;
+    --border2: #fdeef5;
+    --text-primary: #1a1118;
+    --text-secondary: #7a5568;
+    --text-tertiary: #b08090;
+    --accent: #ff4f87;
+    --accent-dark: #e03370;
+    --accent-soft: #fff0f5;
+    --accent-mid: #ffd6e7;
+    --green: #2d8c5a;
+    --green-soft: #eef7f2;
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 22px;
+    --radius-xl: 28px;
+    --shadow-lg: 0 20px 60px rgba(0,0,0,.15), 0 4px 16px rgba(239,112,155,.12);
+    --transition: 200ms cubic-bezier(.4,0,.2,1);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: linear-gradient(135deg, #ef709b 0%, #fa9372 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 28px 16px 56px;
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell { width: 100%; max-width: 500px; }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    padding: 40px 36px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(255,255,255,.6);
+  }
+
+  @media(max-width: 480px) {
+    body { padding: 16px 12px 40px; }
+    .card { padding: 28px 20px; border-radius: var(--radius-lg); }
+  }
+
+  .step { display: none; }
+  .step.active {
+    display: block;
+    animation: stepIn 380ms cubic-bezier(.4,0,.2,1) both;
+  }
+  @keyframes stepIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Badge */
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px;
+    background: var(--accent-soft); border: 1px solid var(--accent-mid);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 22px;
+  }
+  .badge-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:.6} }
+
+  /* Typography */
+  .title { font-size: clamp(22px,5vw,26px); font-weight: 800; line-height: 1.2; letter-spacing: -.03em; color: var(--text-primary); margin-bottom: 12px; }
+  .subtitle { font-size: 15px; line-height: 1.7; color: var(--text-secondary); }
+  .subtitle + .subtitle { margin-top: 4px; }
+  .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    border: none; cursor: pointer;
+    padding: 14px 24px; border-radius: var(--radius-md);
+    font-family: inherit; font-size: 15px; font-weight: 600;
+    transition: var(--transition); letter-spacing: -.01em;
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #ff4f87, #fa7c5e);
+    color: #fff; box-shadow: 0 3px 12px rgba(255,79,135,.35);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,79,135,.4); }
+  .btn-primary:active { transform: translateY(0) scale(.98); }
+  .btn-primary:disabled { opacity: .4; cursor: default; transform: none; box-shadow: none; }
+  .btn-ghost {
+    background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-mid); }
+  .btn-full { width: 100%; }
+  .btn-row { display: flex; gap: 10px; margin-top: 22px; }
+  .btn-row .btn { flex: 1; }
+
+  /* ── Step 1.5 — Slider ── */
+  .know-wrap { margin-top: 24px; }
+  .know-slider-labels {
+    display: flex; justify-content: space-between;
+    font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+    letter-spacing: .03em; margin-bottom: 10px;
+  }
+  .know-track {
+    position: relative; height: 6px;
+    background: var(--border); border-radius: 999px; margin-bottom: 22px;
+  }
+  .know-track-fill {
+    position: absolute; left: 0; top: 0; height: 100%;
+    background: linear-gradient(90deg, #ff4f87, #fa7c5e);
+    border-radius: 999px; transition: width 200ms ease; width: 0%;
+  }
+  input[type=range].know-input {
+    position: absolute; left: 0; top: -9px;
+    width: 100%; height: 24px;
+    -webkit-appearance: none; appearance: none;
+    background: transparent; cursor: pointer; outline: none;
+  }
+  input[type=range].know-input::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, #ff4f87, #fa7c5e);
+    box-shadow: 0 2px 8px rgba(255,79,135,.45);
+    border: 3px solid white; cursor: grab;
+    transition: transform 150ms, box-shadow 150ms;
+  }
+  input[type=range].know-input::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.2); }
+  input[type=range].know-input::-moz-range-thumb {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, #ff4f87, #fa7c5e);
+    box-shadow: 0 2px 8px rgba(255,79,135,.45);
+    border: 3px solid white; cursor: grab;
+  }
+  .know-message {
+    min-height: 80px; padding: 16px 18px;
+    background: var(--accent-soft); border: 1px solid var(--accent-mid);
+    border-radius: var(--radius-md); transition: opacity 220ms;
+  }
+  .know-message.hidden { opacity: 0; pointer-events: none; }
+  .know-msg-level { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .know-pct { font-size: 26px; font-weight: 800; letter-spacing: -.03em; color: var(--accent); display: block; margin-bottom: 2px; }
+  .know-msg-text { font-size: 13.5px; color: var(--text-secondary); line-height: 1.55; }
+
+  /* ── Step 2 — Analysis ── */
+  .analysis-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .analysis-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-tertiary); }
+  .analysis-pct { font-size: 13px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .progress-track { width: 100%; height: 5px; background: var(--border); border-radius: 999px; overflow: hidden; margin-bottom: 16px; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#ff4f87,#fa7c5e); border-radius: 999px; transition: width 150ms ease; }
+  .analysis-msg { font-size: 15px; color: var(--text-secondary); min-height: 22px; transition: opacity 300ms; line-height: 1.5; }
+  .analysis-steps { margin-top: 20px; display: flex; flex-direction: column; gap: 7px; }
+  .a-step {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: var(--radius-sm);
+    background: var(--surface2); border: 1px solid var(--border2);
+    opacity: .3; transition: opacity 400ms, background 400ms, border-color 400ms;
+  }
+  .a-step.done { opacity: 1; background: var(--green-soft); border-color: #c3e0d1; }
+  .a-step.active-step { opacity: 1; }
+  .a-step-icon { font-size: 13px; width: 18px; text-align: center; flex-shrink: 0; }
+  .a-step-label { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+  .a-step-spinner { margin-left: auto; width: 13px; height: 13px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 700ms linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Step 3 — Result ── */
+  .result-hero { text-align: center; padding: 22px 0 14px; }
+  .result-number { font-size: clamp(60px,15vw,76px); font-weight: 800; line-height: 1; letter-spacing: -.04em; color: var(--accent); }
+  .result-label { font-size: 14px; color: var(--text-tertiary); margin-top: 6px; font-weight: 500; }
+  .result-bar { height: 5px; background: var(--border); border-radius: 999px; margin: 16px 0; overflow: hidden; }
+  .result-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #2d8c5a, #48c78e); border-radius: 999px; transition: width 1.4s cubic-bezier(.2,1,.3,1); }
+  .checklist { display: flex; flex-direction: column; gap: 7px; margin: 14px 0; }
+  .check-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: var(--radius-sm);
+    background: var(--green-soft); border: 1px solid #d0ead9;
+    font-size: 14px; font-weight: 500; color: var(--text-primary);
+    opacity: 0; transform: translateX(-8px);
+    transition: opacity 350ms, transform 350ms;
+  }
+  .check-item.visible { opacity: 1; transform: translateX(0); }
+  .c-icon { color: var(--green); font-size: 13px; flex-shrink: 0; }
+  .result-text { font-size: 13.5px; color: var(--text-secondary); line-height: 1.65; padding: 14px 16px; background: var(--accent-soft); border-radius: var(--radius-sm); border: 1px solid var(--accent-mid); margin-top: 14px; }
+
+  /* ── Step 4 — Activities ── */
+  .act-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 18px; }
+  .act-card {
+    padding: 18px 14px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-md); cursor: pointer; text-align: center;
+    transition: var(--transition); background: var(--surface);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .act-card:hover { border-color: var(--accent-mid); transform: translateY(-2px); background: var(--accent-soft); }
+  .act-card:active { transform: scale(.97); }
+  .act-card.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .act-emoji { font-size: 28px; display: block; margin-bottom: 7px; }
+  .act-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .act-feedback {
+    margin-top: 12px; padding: 12px 16px;
+    background: var(--accent-soft); border: 1px solid var(--accent-mid);
+    border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary);
+    min-height: 42px; line-height: 1.5; transition: opacity 250ms;
+  }
+
+  /* ── Step 5 — Question ── */
+  .question-activity {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 14px; background: var(--accent-soft);
+    border: 1px solid var(--accent-mid); border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500; color: var(--accent); margin-bottom: 22px;
+  }
+  .question-main { font-size: clamp(19px,5vw,22px); font-weight: 800; letter-spacing: -.03em; line-height: 1.3; margin-bottom: 8px; }
+  .question-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* No button — contained inside a relative wrapper to avoid overflow bugs */
+  .answer-row { display: flex; gap: 12px; margin-top: 26px; align-items: center; }
+  .btn-yes {
+    flex: 1; background: linear-gradient(135deg,#ff4f87,#fa7c5e);
+    color: #fff; padding: 14px; font-size: 15px; font-weight: 700;
+    border: none; border-radius: var(--radius-md); cursor: pointer;
+    transition: var(--transition); box-shadow: 0 3px 12px rgba(255,79,135,.35);
+    font-family: inherit; letter-spacing: -.01em;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-yes:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,79,135,.45); }
+  .btn-yes:active { transform: scale(.98); }
+
+  /* The No button lives in a fixed overlay when escaping */
+  .btn-no {
+    background: var(--surface2); color: var(--text-secondary);
+    border: 1px solid var(--border); padding: 14px 18px;
+    font-size: 14px; font-weight: 500; border-radius: var(--radius-md);
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .btn-no:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-mid); }
+  .btn-no.is-floating {
+    position: fixed;
+    z-index: 9999;
+    transition: left 400ms cubic-bezier(.2,1,.3,1), top 400ms cubic-bezier(.2,1,.3,1);
+    box-shadow: 0 4px 14px rgba(0,0,0,.12);
+  }
+
+  /* ── Step 6 — Date ── */
+  .date-field { padding: 14px 18px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 10px; }
+  .date-field-label { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 3px; }
+  .date-field-value { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+  .date-field-note { font-size: 12px; color: var(--text-tertiary); }
+  .day-picker { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .day-option {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 16px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-md); cursor: pointer;
+    transition: var(--transition); background: var(--surface);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .day-option:hover { border-color: var(--accent-mid); background: var(--accent-soft); }
+  .day-option:active { transform: scale(.99); }
+  .day-option.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .day-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .day-date { font-size: 12px; color: var(--text-tertiary); }
+  .day-sel { width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid var(--border); transition: var(--transition); flex-shrink: 0; }
+  .day-option.selected .day-sel { background: var(--accent); border-color: var(--accent); }
+  .date-error { font-size: 13px; color: var(--accent); margin-top: 8px; display: none; }
+  .date-error.show { display: block; }
+
+  /* ── Step 7 — Confirm ── */
+  .confirm-summary { background: var(--accent-soft); border: 1px solid var(--accent-mid); border-radius: var(--radius-lg); padding: 20px; margin: 20px 0; }
+  .confirm-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--accent-mid); }
+  .confirm-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .confirm-icon { font-size: 18px; flex-shrink: 0; padding-top: 1px; }
+  .confirm-key { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-tertiary); margin-bottom: 2px; }
+  .confirm-val { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+  .confirm-final { font-size: 20px; font-weight: 800; letter-spacing: -.03em; text-align: center; color: var(--accent); margin-top: 4px; }
+
+  /* ── Share ── */
+  .share-section { margin-top: 22px; }
+  .share-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-tertiary); margin-bottom: 10px; }
+  .share-btns { display: flex; gap: 8px; }
+  .share-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 12px 10px; border-radius: var(--radius-md); border: 1.5px solid var(--border);
+    font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: var(--transition); background: var(--surface);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .share-btn:hover { transform: translateY(-1px); }
+  .share-btn:active { transform: scale(.97); }
+  .share-wa { color: #25D366; border-color: #c8f0d8; background: #f0fdf5; }
+  .share-wa:hover { background: #e0faea; border-color: #25D366; }
+  .share-mail { color: var(--accent); border-color: var(--accent-mid); background: var(--accent-soft); }
+  .share-mail:hover { background: #ffe0ea; border-color: var(--accent); }
+  .share-copy { color: var(--text-secondary); }
+  .share-copy:hover { background: var(--surface2); border-color: #bbb; }
+  .share-icon { font-size: 15px; }
+  .copy-toast {
+    display: none; margin-top: 10px; padding: 10px 14px;
+    background: var(--green-soft); border: 1px solid #c3e0d1;
+    border-radius: var(--radius-sm); font-size: 13px; color: var(--green);
+    font-weight: 500; text-align: center;
+  }
+  .copy-toast.show { display: block; animation: stepIn .3s ease; }
+
+  /* Prevent text selection on interactive elements */
+  .btn, .act-card, .day-option, .share-btn { user-select: none; }
+</style>
+</head>
+<body>
+<div class="shell">
+<div class="card">
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+    <div class="badge"><span class="badge-dot"></span> Appuntamentometro.exe · v2.0</div>
+    <h1 class="title">Ciao 😊</h1>
+    <p class="subtitle">Alcune decisioni meritano un minimo di analisi.</p>
+    <p class="subtitle">Questa è una di quelle.</p>
+    <p class="subtitle" style="margin-top:10px">Per evitare approcci casuali ho costruito un piccolo algoritmo.</p>
+    <div class="divider"></div>
+    <button class="btn btn-primary btn-full" onclick="goTo('step1b')">Avvia analisi →</button>
+  </div>
+
+  <!-- STEP 1.5 -->
+  <div class="step" id="step1b">
+    <div class="badge"><span class="badge-dot"></span> Calibrazione</div>
+    <h1 class="title">Prima di procedere...</h1>
+    <p class="subtitle">Per calibrare l'algoritmo, dimmi quanto ci conosciamo.</p>
+    <div class="know-wrap">
+      <div class="know-slider-labels">
+        <span>Appena incrociati</span>
+        <span>Inseparabili</span>
+      </div>
+      <div class="know-track">
+        <div class="know-track-fill" id="knowFill"></div>
+        <input type="range" class="know-input" id="knowSlider" min="0" max="100" value="0" oninput="onKnowSlide(this.value)">
+      </div>
+      <div class="know-message hidden" id="knowMsg">
+        <div class="know-msg-level" id="knowLevel"></div>
+        <div class="know-msg-text">
+          <span class="know-pct" id="knowPct"></span>
+          <span id="knowText"></span>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goTo('step1')">Indietro</button>
+      <button class="btn btn-primary" id="btnContinue1b" onclick="startAnalysis()" disabled>Continua →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+    <div class="badge"><span class="badge-dot"></span> Elaborazione</div>
+    <h1 class="title">Analisi in corso...</h1>
+    <div class="analysis-head">
+      <span class="analysis-label">Progresso</span>
+      <span class="analysis-pct" id="pct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <p class="analysis-msg" id="analysisMsg">Inizializzazione...</p>
+    <div class="analysis-steps" id="analysisSteps"></div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" id="step3">
+    <div class="badge"><span class="badge-dot"></span> Risultato</div>
+    <div class="result-hero">
+      <div class="result-number">99.8%</div>
+      <div class="result-label">Probabilità di una bella serata</div>
+    </div>
+    <div class="result-bar"><div class="result-bar-fill" id="resultBarFill"></div></div>
+    <div class="checklist" id="checklist"></div>
+    <div class="result-text" id="resultText"></div>
+    <button class="btn btn-primary btn-full" style="margin-top:18px" onclick="goTo('step4')">Continua →</button>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step" id="step4">
+    <div class="badge"><span class="badge-dot"></span> Pianificazione</div>
+    <h1 class="title">Un'ultima variabile</h1>
+    <p class="subtitle">L'algoritmo ha bisogno di un'ultima cosa per completare l'analisi.</p>
+    <div class="act-grid">
+      <div class="act-card" onclick="pickActivity(this,'🍷 Aperitivo','Scelta equilibrata e statisticamente promettente.')">
+        <span class="act-emoji">🍷</span><div class="act-name">Aperitivo</div>
+      </div>
+      <div class="act-card" onclick="pickActivity(this,'🍝 Cena','Alta intensità conversazionale. Scelta ambiziosa — mi piace.')">
+        <span class="act-emoji">🍝</span><div class="act-name">Cena</div>
+      </div>
+      <div class="act-card" onclick="pickActivity(this,'🍦 Gelato','Approccio leggero. Probabilità sorrisi: molto elevata.')">
+        <span class="act-emoji">🍦</span><div class="act-name">Gelato</div>
+      </div>
+      <div class="act-card" onclick="pickActivity(this,'🌆 Passeggiata','Contesto rilassato, conversazione fluida. Dati incoraggianti.')">
+        <span class="act-emoji">🌆</span><div class="act-name">Passeggiata</div>
+      </div>
+    </div>
+    <div class="act-feedback" id="actFeedback" style="opacity:.4">Seleziona un'attività per vedere l'analisi.</div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goTo('step3')">Indietro</button>
+      <button class="btn btn-primary" id="btnContinue4" onclick="goTo('step5')" disabled>Continua →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step" id="step5">
+    <div class="badge"><span class="badge-dot"></span> Analisi completata</div>
+    <div class="question-activity" id="chosenActivity"></div>
+    <h2 class="question-main">E quindi... ti andrebbe di uscire con me? ❤️</h2>
+    <p class="question-sub">Prometto una conversazione interessante e almeno un sorriso.</p>
+    <div class="answer-row">
+      <button class="btn-yes" onclick="goTo('step6')">Sì 😍</button>
+      <button class="btn-no" id="noBtn">Forse no</button>
+    </div>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="step" id="step6">
+    <div class="badge"><span class="badge-dot"></span> Pianificazione</div>
+    <h1 class="title">Scegli la data 📅</h1>
+    <div class="date-field">
+      <div class="date-field-label">Anno</div>
+      <div class="date-field-value" id="yearValue"></div>
+      <div class="date-field-note">Decisione strategicamente bloccata.</div>
+    </div>
+    <div class="date-field">
+      <div class="date-field-label">Mese</div>
+      <div class="date-field-value" id="monthValue"></div>
+      <div class="date-field-note">L'algoritmo suggerisce di non rimandare troppo.</div>
+    </div>
+    <div class="day-picker" id="dayPicker"></div>
+    <div class="date-error" id="dateError">Seleziona un giorno per continuare.</div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn btn-ghost" onclick="goTo('step5')">Indietro</button>
+      <button class="btn btn-primary" onclick="confirmDate()">Conferma →</button>
+    </div>
+  </div>
+
+  <!-- STEP 7 -->
+  <div class="step" id="step7">
+    <div class="badge"><span class="badge-dot"></span> Confermato ✓</div>
+    <h1 class="title">Prenotazione completata 🎉</h1>
+    <div class="confirm-summary" id="confirmSummary"></div>
+    <p class="confirm-final">Non vedo l'ora. ❤️</p>
+    <div class="share-section">
+      <div class="share-title">Invia l'invito</div>
+      <div class="share-btns">
+        <button class="share-btn share-wa" onclick="shareWhatsApp()">
+          <span class="share-icon">💬</span> WhatsApp
+        </button>
+        <button class="share-btn share-mail" onclick="shareMail()">
+          <span class="share-icon">✉️</span> Email
+        </button>
+        <button class="share-btn share-copy" onclick="copyText()">
+          <span class="share-icon">📋</span> Copia
+        </button>
+      </div>
+      <div class="copy-toast" id="copyToast">✓ Testo copiato negli appunti!</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ── State ──
+let knowledgeLevel = null;
+let selectedActivity = null;
+let selectedDay = null;
+
+// ── Navigation ──
+function goTo(id) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Step 1.5 — Knowledge slider ──
+const knowData = [
+  {
+    min: 0, max: 24, level: 'new', label: 'Ancora no',
+    text: 'Questa sarebbe una delle nostre prime vere conversazioni. Il che rende tutto molto più interessante.'
+  },
+  {
+    min: 25, max: 49, level: 'alittle', label: 'Ci conosciamo poco',
+    text: 'Ci siamo incrociati, ma non abbastanza da compilare un dossier completo. C\'è ancora molto da scoprire.'
+  },
+  {
+    min: 50, max: 74, level: 'known', label: 'Ci conosciamo',
+    text: 'Abbiamo già parlato, condiviso qualche conversazione. Abbastanza per sapere che ne vale la pena.'
+  },
+  {
+    min: 75, max: 100, level: 'close', label: 'Ci conosciamo bene',
+    text: 'Ci sono già stati dei bei momenti. L\'algoritmo suggerisce di crearne altri al più presto.'
+  }
+];
+
+function onKnowSlide(val) {
+  val = parseInt(val);
+  document.getElementById('knowFill').style.width = val + '%';
+  const tier = knowData.find(d => val >= d.min && val <= d.max);
+  if (!tier) return;
+  knowledgeLevel = tier.level;
+  const msg = document.getElementById('knowMsg');
+  msg.style.opacity = '0';
+  msg.classList.remove('hidden');
+  setTimeout(() => {
+    document.getElementById('knowLevel').textContent = tier.label;
+    document.getElementById('knowPct').textContent = val + '%';
+    document.getElementById('knowText').textContent = tier.text;
+    msg.style.opacity = '1';
+  }, 100);
+  document.getElementById('btnContinue1b').disabled = false;
+}
+
+// ── Step 2 — Analysis ──
+const analysisData = {
+  new: [
+    { label: 'Raccolta dati pubblicamente disponibili', icon: '🌐' },
+    { label: 'Analisi livello curiosità', icon: '🔬' },
+    { label: 'Simulazione prima conversazione', icon: '🎭' },
+    { label: 'Verifica coraggio dell\'autore', icon: '🦁' },
+    { label: 'Generazione strategia di approccio', icon: '✅' },
+  ],
+  alittle: [
+    { label: 'Analisi interazioni disponibili', icon: '🔍' },
+    { label: 'Elaborazione segnali positivi', icon: '📡' },
+    { label: 'Ricerca elementi in comune', icon: '🔗' },
+    { label: 'Validazione ipotesi', icon: '✅' },
+  ],
+  known: [
+    { label: 'Analisi conversazioni', icon: '💬' },
+    { label: 'Verifica ricordi condivisi', icon: '🗂️' },
+    { label: 'Valutazione affinità', icon: '📊' },
+    { label: 'Elaborazione risultato', icon: '✅' },
+  ],
+  close: [
+    { label: 'Analisi conversazioni e ricordi', icon: '💬' },
+    { label: 'Calcolo momentum attuale', icon: '📈' },
+    { label: 'Valutazione affinità complessiva', icon: '✨' },
+    { label: 'Ottimizzazione proposta', icon: '✅' },
+  ]
+};
+
+const resultData = {
+  new: {
+    checks: ['Mi incuriosisci', 'Hai catturato la mia attenzione', 'Potresti essere una persona interessante', 'L\'algoritmo richiede ulteriori dati sul campo'],
+    text: 'Dati insufficienti per una conclusione definitiva. Si raccomanda una raccolta informazioni tramite caffè, aperitivo o passeggiata.'
+  },
+  alittle: {
+    checks: ['Le informazioni disponibili sono incoraggianti', 'La curiosità è superiore alla media', 'Le conversazioni meritano un approfondimento', 'Un incontro sembra statisticamente sensato'],
+    text: 'Il campione di dati è limitato, ma i segnali sono decisamente promettenti.'
+  },
+  known: {
+    checks: ['Mi piace parlare con te', 'Mi fai sorridere', 'Passerei volentieri altro tempo con te', 'Vorrei conoscerti ancora meglio'],
+    text: 'I dati raccolti indicano un\'elevata probabilità di una bella serata.'
+  },
+  close: {
+    checks: ['Mi piace stare con te', 'Ci capiamo al volo', 'C\'è sempre qualcosa da dirsi', 'L\'algoritmo è categorico: bisogna uscire'],
+    text: 'L\'analisi è inequivocabile. Aspettare ulteriormente sarebbe statisticamente irrazionale.'
+  }
+};
+
+function startAnalysis() {
+  if (!knowledgeLevel) return;
+  goTo('step2');
+  const steps = analysisData[knowledgeLevel];
+  const container = document.getElementById('analysisSteps');
+  container.innerHTML = '';
+  const stepEls = steps.map(s => {
+    const el = document.createElement('div');
+    el.className = 'a-step';
+    el.innerHTML = `<span class="a-step-icon">${s.icon}</span><span class="a-step-label">${s.label}</span>`;
+    container.appendChild(el);
+    return el;
+  });
+  const fill = document.getElementById('progressFill');
+  const pctEl = document.getElementById('pct');
+  const msgEl = document.getElementById('analysisMsg');
+
+  function setMsg(text) {
+    msgEl.style.opacity = '0';
+    setTimeout(() => { msgEl.textContent = text; msgEl.style.opacity = '1'; }, 180);
+  }
+
+  let progress = 0;
+  function update() {
+    fill.style.width = progress + '%';
+    pctEl.textContent = progress + '%';
+    const stepIdx = Math.min(Math.floor(progress / (100 / steps.length)), steps.length - 1);
+    stepEls.forEach((el, i) => {
+      if (i < stepIdx) {
+        el.classList.remove('active-step'); el.classList.add('done');
+        const sp = el.querySelector('.a-step-spinner'); if (sp) sp.remove();
+        el.querySelector('.a-step-icon').textContent = '✓';
+      } else if (i === stepIdx && !el.classList.contains('active-step')) {
+        el.classList.add('active-step');
+        setMsg(steps[i].label + '...');
+        if (!el.querySelector('.a-step-spinner')) {
+          const sp = document.createElement('div'); sp.className = 'a-step-spinner'; el.appendChild(sp);
+        }
+      }
+    });
+    if (progress >= 99) {
+      setMsg('Elaborazione risultato finale...');
+      setTimeout(() => {
+        fill.style.width = '100%'; pctEl.textContent = '100%';
+        stepEls.forEach(el => {
+          el.classList.add('done'); el.classList.remove('active-step');
+          const sp = el.querySelector('.a-step-spinner'); if (sp) sp.remove();
+          el.querySelector('.a-step-icon').textContent = '✓';
+        });
+        setTimeout(() => {
+          buildResult(); goTo('step3');
+          setTimeout(() => {
+            document.getElementById('resultBarFill').style.width = '99.8%';
+            document.querySelectorAll('.check-item').forEach((el, i) =>
+              setTimeout(() => el.classList.add('visible'), i * 130 + 200));
+          }, 100);
+        }, 700);
+      }, 1500);
+      return;
+    }
+    let delay = progress < 20 ? 50 : progress < 50 ? 80 : progress < 75 ? 125 : progress < 90 ? 185 : 250;
+    progress++;
+    setTimeout(update, delay);
+  }
+  update();
+}
+
+function buildResult() {
+  const d = resultData[knowledgeLevel];
+  document.getElementById('checklist').innerHTML = d.checks.map(c =>
+    `<div class="check-item"><span class="c-icon">✓</span> ${c}</div>`).join('');
+  document.getElementById('resultText').textContent = d.text;
+}
+
+// ── Step 4 — Activities ──
+function pickActivity(card, name, feedback) {
+  document.querySelectorAll('.act-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedActivity = name;
+  document.getElementById('chosenActivity').textContent = name;
+  const fb = document.getElementById('actFeedback');
+  fb.style.opacity = '0';
+  setTimeout(() => { fb.textContent = feedback; fb.style.opacity = '1'; }, 150);
+  document.getElementById('btnContinue4').disabled = false;
+}
+
+// ── Step 5 — Elusive "No" button ──
+const noMessages = ['Forse no', 'Non ancora convinta', 'Mmm...', 'Ci ripenso', 'Quasi'];
+let noIndex = 0;
+let noIsAway = false;
+let noEscapeCount = 0;
+const noBtn = document.getElementById('noBtn');
+
+function escapeNoBtn() {
+  if (noIsAway) return;
+  noIsAway = true;
+  noEscapeCount++;
+  noIndex = noEscapeCount % noMessages.length;
+  noBtn.textContent = noMessages[noIndex];
+
+  // Get current button size before going fixed
+  const rect = noBtn.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  const margin = 20;
+
+  // Safe area: stay within viewport
+  const maxX = Math.max(margin, window.innerWidth - w - margin);
+  const maxY = Math.max(margin, window.innerHeight - h - margin);
+  const newX = margin + Math.random() * (maxX - margin);
+  const newY = margin + Math.random() * (maxY - margin);
+
+  noBtn.classList.add('is-floating');
+  // Set initial position without transition first (to avoid flying from 0,0)
+  if (!noBtn.style.left) {
+    noBtn.style.transition = 'none';
+    noBtn.style.left = rect.left + 'px';
+    noBtn.style.top = rect.top + 'px';
+    // Force reflow
+    noBtn.offsetHeight;
+  }
+  noBtn.style.transition = 'left 400ms cubic-bezier(.2,1,.3,1), top 400ms cubic-bezier(.2,1,.3,1)';
+  noBtn.style.left = newX + 'px';
+  noBtn.style.top = newY + 'px';
+  setTimeout(() => { noIsAway = false; }, 450);
+}
+
+// Desktop: proximity detection
+document.addEventListener('mousemove', e => {
+  if (!document.getElementById('step5').classList.contains('active') || noIsAway) return;
+  const rect = noBtn.getBoundingClientRect();
+  const dist = Math.hypot(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
+  if (dist < 100) escapeNoBtn();
+});
+
+// Mobile: tap to escape
+noBtn.addEventListener('touchstart', e => {
+  if (!document.getElementById('step5').classList.contains('active')) return;
+  e.preventDefault();
+  escapeNoBtn();
+}, { passive: false });
+
+function resetNoBtn() {
+  noBtn.classList.remove('is-floating');
+  noBtn.style.left = '';
+  noBtn.style.top = '';
+  noBtn.style.transition = '';
+  noIndex = 0;
+  noEscapeCount = 0;
+  noIsAway = false;
+  noBtn.textContent = noMessages[0];
+}
+
+// ── Step 6 — Date picker ──
+const today = new Date();
+const itMonths = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const itDays = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+
+document.getElementById('yearValue').textContent = today.getFullYear();
+document.getElementById('monthValue').textContent = itMonths[today.getMonth()];
+
+const dow = today.getDay();
+const mondayOffset = dow === 0 ? -6 : 1 - dow;
+const monday = new Date(today);
+monday.setDate(today.getDate() + mondayOffset);
+
+const picker = document.getElementById('dayPicker');
+for (let i = 0; i < 7; i++) {
+  const d = new Date(monday);
+  d.setDate(monday.getDate() + i);
+  const label = `${itDays[d.getDay()]} ${d.getDate()} ${itMonths[d.getMonth()]}`;
+  const el = document.createElement('div');
+  el.className = 'day-option';
+  el.innerHTML = `<div><div class="day-name">${itDays[d.getDay()]}</div><div class="day-date">${d.getDate()} ${itMonths[d.getMonth()]}</div></div><div class="day-sel"></div>`;
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.day-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedDay = label;
+    document.getElementById('dateError').classList.remove('show');
+  });
+  picker.appendChild(el);
+}
+
+function confirmDate() {
+  if (!selectedDay) { document.getElementById('dateError').classList.add('show'); return; }
+  buildConfirm();
+  resetNoBtn();
+  goTo('step7');
+}
+
+function buildConfirm() {
+  const emoji = selectedActivity ? selectedActivity.split(' ')[0] : '🎉';
+  const actName = selectedActivity ? selectedActivity.replace(/^\S+\s*/, '') : '—';
+  document.getElementById('confirmSummary').innerHTML = `
+    <div class="confirm-row"><div class="confirm-icon">📅</div><div><div class="confirm-key">Data</div><div class="confirm-val">${selectedDay}</div></div></div>
+    <div class="confirm-row"><div class="confirm-icon">${emoji}</div><div><div class="confirm-key">Attività</div><div class="confirm-val">${actName}</div></div></div>
+    <div class="confirm-row"><div class="confirm-icon">❤️</div><div><div class="confirm-key">Compagnia</div><div class="confirm-val">Ottima</div></div></div>`;
+}
+
+// ── Step 7 — Share ──
+// Il messaggio è scritto come se fosse LEI a mandarlo a Michele
+function buildShareText() {
+  const actName = selectedActivity ? selectedActivity.replace(/^\S+\s*/, '') : '...';
+  const emoji = selectedActivity ? selectedActivity.split(' ')[0] : '🎉';
+  return `Ciao Michele 😊\n\nSei fantastico — non ho potuto fare altro che accettare.\n\n📅 ${selectedDay || '—'}\n${emoji} ${actName}\n\nNon vedo l'ora! ❤️`;
+}
+
+function shareWhatsApp() {
+  const text = encodeURIComponent(buildShareText());
+  window.open('https://wa.me/?text=' + text, '_blank');
+}
+
+function shareMail() {
+  const subject = encodeURIComponent('Ho accettato 🎉');
+  const body = encodeURIComponent(buildShareText());
+  window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+}
+
+function copyText() {
+  const text = buildShareText();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(showCopyToast).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); showCopyToast(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+function showCopyToast() {
+  const t = document.getElementById('copyToast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
