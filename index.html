@@ -405,6 +405,7 @@
     <div class="badge"><span class="badge-dot"></span> Pianificazione</div>
     <h1 class="title">Un'ultima variabile</h1>
     <p class="subtitle">L'algoritmo ha bisogno di un'ultima cosa per completare l'analisi.</p>
+    <p class="subtitle">Seleziona il tipo di attività che vorresti intraprendere.</p>
     <div class="act-grid">
       <div class="act-card" onclick="pickActivity(this,'🍷 Aperitivo','Scelta equilibrata e statisticamente promettente.')">
         <span class="act-emoji">🍷</span><div class="act-name">Aperitivo</div>
@@ -419,7 +420,7 @@
         <span class="act-emoji">🌆</span><div class="act-name">Passeggiata</div>
       </div>
     </div>
-    <div class="act-feedback" id="actFeedback" style="opacity:.4">Seleziona un'attività per vedere l'analisi.</div>
+    <div class="act-feedback" id="actFeedback" style="opacity:.4">Dopo la selezione partirà l'analisi.</div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="goTo('step3')">Indietro</button>
       <button class="btn btn-primary" id="btnContinue4" onclick="goTo('step5')" disabled>Continua →</button>
@@ -789,7 +790,7 @@ function buildConfirm() {
 function buildShareText() {
   const actName = selectedActivity ? selectedActivity.replace(/^\S+\s*/, '') : '...';
   const emoji = selectedActivity ? selectedActivity.split(' ')[0] : '🎉';
-  return `Ciao Michele 😊\n\nSei fantastico — non ho potuto fare altro che accettare.\n\n📅 ${selectedDay || '—'}\n${emoji} ${actName}\n\nNon vedo l'ora! ❤️`;
+  return `Ciao 😊\n\nSei fantastico — non ho potuto fare altro che accettare.\n\n📅 ${selectedDay || '—'}\n${emoji} ${actName}\n\nNon vedo l'ora! ❤️`;
 }
 
 function shareWhatsApp() {
