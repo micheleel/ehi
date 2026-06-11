@@ -1,15 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta property="og:title" content="ehi.exe">
-<meta property="og:description" content="Alcune decisioni meritano un minimo di analisi.">
-<meta property="og:image" content="https://michele-fontana.github.io/ehi/anteprima.jpg">
-<meta property="og:url" content="https://michele-fontana.github.io/ehi">
-<meta property="og:type" content="website">
-<meta name="description" content="Alcune decisioni meritano un minimo di analisi.">
 <title>ehi.exe</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -283,10 +276,22 @@
   .day-option:hover { border-color: var(--accent-mid); background: var(--accent-soft); }
   .day-option:active { transform: scale(.99); }
   .day-option.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .day-option.day-past { opacity: .35; cursor: default; pointer-events: none; }
   .day-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
   .day-date { font-size: 12px; color: var(--text-tertiary); }
   .day-sel { width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid var(--border); transition: var(--transition); flex-shrink: 0; }
   .day-option.selected .day-sel { background: var(--accent); border-color: var(--accent); }
+  .time-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .time-option {
+    padding: 9px 6px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); cursor: pointer; text-align: center;
+    font-size: 13px; font-weight: 600; color: var(--text-secondary);
+    background: var(--surface); transition: var(--transition);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .time-option:hover { border-color: var(--accent-mid); background: var(--accent-soft); color: var(--accent); }
+  .time-option:active { transform: scale(.97); }
+  .time-option.selected { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
   .date-error { font-size: 13px; color: var(--accent); margin-top: 8px; display: none; }
   .date-error.show { display: block; }
 
@@ -314,8 +319,8 @@
   .share-btn:active { transform: scale(.97); }
   .share-wa { color: #25D366; border-color: #c8f0d8; background: #f0fdf5; }
   .share-wa:hover { background: #e0faea; border-color: #25D366; }
-  .share-mail { color: var(--accent); border-color: var(--accent-mid); background: var(--accent-soft); }
-  .share-mail:hover { background: #ffe0ea; border-color: var(--accent); }
+  .share-ig { color: #C13584; border-color: #f5c6e8; background: #fdf0f8; }
+  .share-ig:hover { background: #fce0f2; border-color: #C13584; }
   .share-copy { color: var(--text-secondary); }
   .share-copy:hover { background: var(--surface2); border-color: #bbb; }
   .share-icon { font-size: 15px; }
@@ -337,7 +342,7 @@
 
   <!-- STEP 1 -->
   <div class="step active" id="step1">
-    <div class="badge"><span class="badge-dot"></span> Analisi · v2.0</div>
+    <div class="badge"><span class="badge-dot"></span> ehi.exe · v2.0</div>
     <h1 class="title">Ciao 😊</h1>
     <p class="subtitle">Alcune decisioni meritano un minimo di analisi.</p>
     <p class="subtitle">Questa è una di quelle.</p>
@@ -405,7 +410,6 @@
     <div class="badge"><span class="badge-dot"></span> Pianificazione</div>
     <h1 class="title">Un'ultima variabile</h1>
     <p class="subtitle">L'algoritmo ha bisogno di un'ultima cosa per completare l'analisi.</p>
-    <p class="subtitle">Seleziona il tipo di attività che vorresti intraprendere.</p>
     <div class="act-grid">
       <div class="act-card" onclick="pickActivity(this,'🍷 Aperitivo','Scelta equilibrata e statisticamente promettente.')">
         <span class="act-emoji">🍷</span><div class="act-name">Aperitivo</div>
@@ -420,7 +424,7 @@
         <span class="act-emoji">🌆</span><div class="act-name">Passeggiata</div>
       </div>
     </div>
-    <div class="act-feedback" id="actFeedback" style="opacity:.4">Dopo la selezione partirà l'analisi.</div>
+    <div class="act-feedback" id="actFeedback" style="opacity:.4">Seleziona un'attività per vedere l'analisi.</div>
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="goTo('step3')">Indietro</button>
       <button class="btn btn-primary" id="btnContinue4" onclick="goTo('step5')" disabled>Continua →</button>
@@ -455,6 +459,14 @@
     </div>
     <div class="day-picker" id="dayPicker"></div>
     <div class="date-error" id="dateError">Seleziona un giorno per continuare.</div>
+
+    <div class="date-field" style="margin-top:10px">
+      <div class="date-field-label">Ora</div>
+      <div class="date-field-note" style="margin-bottom:10px">Seleziona l'orario. L'algoritmo sconsiglia di aspettare troppo.</div>
+      <div class="time-picker" id="timePicker"></div>
+    </div>
+    <div class="date-error" id="timeError">Seleziona un orario per continuare.</div>
+
     <div class="btn-row" style="margin-top:16px">
       <button class="btn btn-ghost" onclick="goTo('step5')">Indietro</button>
       <button class="btn btn-primary" onclick="confirmDate()">Conferma →</button>
@@ -473,8 +485,8 @@
         <button class="share-btn share-wa" onclick="shareWhatsApp()">
           <span class="share-icon">💬</span> WhatsApp
         </button>
-        <button class="share-btn share-mail" onclick="shareMail()">
-          <span class="share-icon">✉️</span> Email
+        <button class="share-btn share-ig" onclick="shareInstagram()">
+          <span class="share-icon">📸</span> Instagram
         </button>
         <button class="share-btn share-copy" onclick="copyText()">
           <span class="share-icon">📋</span> Copia
@@ -492,6 +504,7 @@
 let knowledgeLevel = null;
 let selectedActivity = null;
 let selectedDay = null;
+let selectedTime = null;
 
 // ── Navigation ──
 function goTo(id) {
@@ -752,25 +765,48 @@ const mondayOffset = dow === 0 ? -6 : 1 - dow;
 const monday = new Date(today);
 monday.setDate(today.getDate() + mondayOffset);
 
+const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 const picker = document.getElementById('dayPicker');
 for (let i = 0; i < 7; i++) {
   const d = new Date(monday);
   d.setDate(monday.getDate() + i);
+  const isPast = d < todayMidnight;
   const label = `${itDays[d.getDay()]} ${d.getDate()} ${itMonths[d.getMonth()]}`;
   const el = document.createElement('div');
-  el.className = 'day-option';
+  el.className = 'day-option' + (isPast ? ' day-past' : '');
   el.innerHTML = `<div><div class="day-name">${itDays[d.getDay()]}</div><div class="day-date">${d.getDate()} ${itMonths[d.getMonth()]}</div></div><div class="day-sel"></div>`;
-  el.addEventListener('click', () => {
-    document.querySelectorAll('.day-option').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedDay = label;
-    document.getElementById('dateError').classList.remove('show');
-  });
+  if (!isPast) {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.day-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedDay = label;
+      document.getElementById('dateError').classList.remove('show');
+    });
+  }
   picker.appendChild(el);
 }
 
+// ── Time picker ──
+const timePicker = document.getElementById('timePicker');
+const timeSlots = ['17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00','22:30'];
+timeSlots.forEach(t => {
+  const el = document.createElement('div');
+  el.className = 'time-option';
+  el.textContent = t;
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.time-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedTime = t;
+    document.getElementById('timeError').classList.remove('show');
+  });
+  timePicker.appendChild(el);
+});
+
 function confirmDate() {
-  if (!selectedDay) { document.getElementById('dateError').classList.add('show'); return; }
+  let ok = true;
+  if (!selectedDay) { document.getElementById('dateError').classList.add('show'); ok = false; }
+  if (!selectedTime) { document.getElementById('timeError').classList.add('show'); ok = false; }
+  if (!ok) return;
   buildConfirm();
   resetNoBtn();
   goTo('step7');
@@ -781,6 +817,7 @@ function buildConfirm() {
   const actName = selectedActivity ? selectedActivity.replace(/^\S+\s*/, '') : '—';
   document.getElementById('confirmSummary').innerHTML = `
     <div class="confirm-row"><div class="confirm-icon">📅</div><div><div class="confirm-key">Data</div><div class="confirm-val">${selectedDay}</div></div></div>
+    <div class="confirm-row"><div class="confirm-icon">🕐</div><div><div class="confirm-key">Ora</div><div class="confirm-val">${selectedTime || '—'}</div></div></div>
     <div class="confirm-row"><div class="confirm-icon">${emoji}</div><div><div class="confirm-key">Attività</div><div class="confirm-val">${actName}</div></div></div>
     <div class="confirm-row"><div class="confirm-icon">❤️</div><div><div class="confirm-key">Compagnia</div><div class="confirm-val">Ottima</div></div></div>`;
 }
@@ -790,7 +827,7 @@ function buildConfirm() {
 function buildShareText() {
   const actName = selectedActivity ? selectedActivity.replace(/^\S+\s*/, '') : '...';
   const emoji = selectedActivity ? selectedActivity.split(' ')[0] : '🎉';
-  return `Ciao 😊\n\nSei fantastico — non ho potuto fare altro che accettare.\n\n📅 ${selectedDay || '—'}\n${emoji} ${actName}\n\nNon vedo l'ora! ❤️`;
+  return `Ciao Michele 😊\n\nSei fantastico — non ho potuto fare altro che accettare.\n\n📅 ${selectedDay || '—'}\n🕐 ${selectedTime || '—'}\n${emoji} ${actName}\n\nNon vedo l'ora! ❤️`;
 }
 
 function shareWhatsApp() {
@@ -798,16 +835,26 @@ function shareWhatsApp() {
   window.open('https://wa.me/?text=' + text, '_blank');
 }
 
-function shareMail() {
-  const subject = encodeURIComponent('Ho accettato 🎉');
-  const body = encodeURIComponent(buildShareText());
-  window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+function shareInstagram() {
+  const text = buildShareText();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showCopyToast('✓ Testo copiato — incollalo su Instagram!');
+      setTimeout(() => window.open('https://www.instagram.com/direct/inbox/', '_blank'), 600);
+    }).catch(() => {
+      fallbackCopy(text);
+      window.open('https://www.instagram.com/direct/inbox/', '_blank');
+    });
+  } else {
+    fallbackCopy(text);
+    window.open('https://www.instagram.com/direct/inbox/', '_blank');
+  }
 }
 
 function copyText() {
   const text = buildShareText();
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(showCopyToast).catch(() => fallbackCopy(text));
+    navigator.clipboard.writeText(text).then(() => showCopyToast()).catch(() => fallbackCopy(text));
   } else {
     fallbackCopy(text);
   }
@@ -824,10 +871,11 @@ function fallbackCopy(text) {
   document.body.removeChild(ta);
 }
 
-function showCopyToast() {
+function showCopyToast(msg) {
   const t = document.getElementById('copyToast');
+  t.textContent = msg || '✓ Testo copiato negli appunti!';
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  setTimeout(() => t.classList.remove('show'), 3000);
 }
 </script>
 </body>
